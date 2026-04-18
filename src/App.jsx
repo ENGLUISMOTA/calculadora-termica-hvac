@@ -6,21 +6,47 @@ function App() {
   const [area, setArea] = useState('')
   const [pessoas, setPessoas] = useState('')
   const [aparelhos, setAparelhos] = useState('')
-  const [sol, setSol] = useState(false) // false = Manhã/Noite, true = Tarde
+  const [sol, setSol] = useState(false) 
   const [resultado, setResultado] = useState(null)
+  const [carregando, setCarregando] = useState(false) // Estado para feedback visual
 
-  const calcularCarga = (e) => {
+  const calcularCarga = async (e) => {
     e.preventDefault()
+    setCarregando(true)
     
-    // Fator base: 600 BTU/m² (padrão) ou 800 BTU/m² (sol forte)
-    const fatorBase = sol ? 800 : 600
-    
-    const cargaArea = Number(area) * fatorBase
-    // A primeira pessoa não conta (já está no fator m²), adicionamos 600 por pessoa extra
-    const cargaPessoas = Number(pessoas) > 1 ? (Number(pessoas) - 1) * 600 : 0
-    const cargaAparelhos = Number(aparelhos) * 600
-    
-    setResultado(cargaArea + cargaPessoas + cargaAparelhos)
+    // 1. Preparamos o objeto exatamente como o n8n espera receber
+    const dadosParaN8n = {
+      area: Number(area),
+      ocupantes: Number(pessoas),
+      eletronicos: Number(aparelhos),
+      Sol_forte: sol ? 1 : 0 // Enviando como 1 ou 0 para facilitar no n8n
+    }
+
+    try {
+      // 2. Chamada para o seu Webhook do n8n no Docker
+      // IMPORTANTE: Use a 'Test URL' do seu nó Webhook enquanto estiver desenvolvendo
+      const response = await fetch('http://localhost:5678/webhook-test/calculo-hvac', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dadosParaN8n)
+      })
+
+      if (!response.ok) throw new Error('Erro na conexão com n8n')
+
+      const data = await response.json()
+
+      // 3. Atualizamos o estado com o valor que o n8n calculou
+      // Nota: 'resultado_btu' deve ser o nome da chave que você colocou no 'return' do nó Code
+      setResultado(data.resultado_btu)
+
+    } catch (error) {
+      console.error("Erro ao calcular:", error)
+      alert("Erro ao conectar com o servidor de cálculo (n8n). Verifique se o Docker está rodando.")
+    } finally {
+      setCarregando(false)
+    }
   }
 
   return (
@@ -49,7 +75,9 @@ function App() {
             <input type="checkbox" checked={sol} onChange={(e) => setSol(e.target.checked)} />
           </div>
 
-          <button type="submit" className="btn-calc">Calcular Projeto</button>
+          <button type="submit" className="btn-calc" disabled={carregando}>
+            {carregando ? 'Calculando no n8n...' : 'Calcular Projeto'}
+          </button>
         </form>
 
         {resultado && (
