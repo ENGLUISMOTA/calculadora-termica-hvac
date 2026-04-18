@@ -1,0 +1,25 @@
+.toggle-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+}
+
+.toggle-group label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #999;
+}
+
+.toggle-group input {
+  cursor: pointer;
+  accent-color: #000;
+}
+
+small {
+  display: block;
+  margin-top: 10px;
+  color: #888;
+  font-size: 12px;
+  letter-spacing: 1px;
+}
