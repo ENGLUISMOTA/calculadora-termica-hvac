@@ -1,0 +1,84 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "PATCH",
+        "path": "calculo-hvac",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "8804d496-c288-4d79-b578-0ce5be513bdb",
+      "name": "Webhook",
+      "webhookId": "6e99689f-ca8f-425a-bddf-b77bdcbd9367"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Recupera os dados enviados pelo site\nconst { area, ocupantes, eletronicos, Sol_forte } = $input.item.json;\n\n// Lógica de cálculo HVAC padrão:\n// 600 BTUs por m²\n// + 600 BTUs por pessoa extra (a primeira não conta em algumas normas, mas aqui somamos todos para segurança)\n// + 600 BTUs por eletrônico\n// Se tiver sol forte, a base sobe para 800 BTUs\nconst baseBTU = Sol_forte === 1 ? 800 : 600;\n\nconst resultado = (area * baseBTU) + (ocupantes * 600) + (eletronicos * 600);\n\nreturn {\n  resultado_btu: resultado\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "42d083f6-86e4-4df0-ad98-b3e1eb16c9de",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        416,
+        0
+      ],
+      "id": "c7875715-ee8a-419e-b87b-0eef089d76b4",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b4cebb05-846f-4bf8-a074-259a3ff5dde9",
+  "meta": {
+    "instanceId": "dac2492228b413fa826b31d2af15f5e542dfa9dadff4831dbd10482a0d38d1c8"
+  },
+  "id": "kCfiMtnFrWoJTtCO",
+  "tags": []
+}
